@@ -1,0 +1,74 @@
+#paper is here:
+# https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/s12874-019-0681-4
+
+# First, set your working directory (see episode 'Analyzing Patient Data' for more
+# info)
+setwd("/Users/georgedamoulakis/new mac from JUNE/6_ML_Rstudio_BreastCancer")
+
+#1. Importing and preparing the dataset.################################################################################################
+
+# Import the data and look at the first six rows
+cancer <- read.csv( file = "/Users/georgedamoulakis/new mac from JUNE/6_ML_Rstudio_BreastCancer/breast-cancer-wisconsin.data", header = FALSE, stringsAsFactors = F)
+
+# Give names to the collumns
+names(cancer) = c("ID", "thickness", "cell_size", "cell_shape", "adhesion", "epithelial_size", "bare_nuclei", "bland_cromatin", "normal_nucleoli", "mitoses", "class")
+
+#removing any rows with missing data 
+
+#convert data to dataframe
+cancer = as.data.frame(cancer)
+
+# for collumn bare_nuclei, if there is a value equal with ?, meaning that we dont know what happened 
+#we substitute this ? with NA = Non Available
+cancer$bare_nuclei = replace(cancer$bare_nuclei, cancer$bare_nuclei=="?", NA)
+
+# after the subtitution we ommit all the lines with NA inside them
+cancer = na.omit(cancer)
+
+#re-scoring the class variables from 2 and 4 to 0 and 1, 
+#where 0 indicates the tumour was benign and 1 indicates that it was malignant. 
+cancer$class = (cancer$class/2)-1
+
+set.seed(080817) #dont know yet
+index = 1:nrow(cancer) #builds the index
+
+#divide the dataset into two required segments, 
+#one 67% of the dataset, for training; 
+#other to be used for evaluation 33%.
+testindex = sample(index, trunc(length(index)/3))
+testset = cancer[testindex,]
+trainset = cancer[-testindex,]
+
+#inputs are denoted in code as x
+#outcomes are denoted using y
+
+x_train = data.matrix(trainset[,2:10])
+y_train = as.numeric(trainset[,11])
+
+x_test = data.matrix(testset[,2:10])
+y_test = as.numeric(testset[,11])
+
+#2. Training the ML algorithms.#######################################################################
+## GLMs ##############################################################################################
+
+install.packages("glmnet")
+require(glmnet)
+#Fit the GLM model to the data and extract the coefficients and minimum value of lambda
+glm_model = cv.glmnet(x_train, y_train, alpha=1, nfolds =10)
+lambda.min = glm_model$lambda.min
+glm_coef = round(coef(glm_model,s = lambda.min),2)
+
+#plot the cross validation curves for the GLM algorithm
+plot(glm_model, width = 2, height =1 , units = 'in')
+
+#plot the coefficients and their magnitudes
+plot(glmnet(x_train, y_train, family='gaussian', alpha=1), 'lambda', label=T, main = '')
+abline(v=log(lambda.min), lty=3)
+
+## SVMs ##############################################################################################
+install.packages('e1071')
+require(e1071)
+svm_model = svm(x_train, y_train, cost = 1, 
+                gamma = as.vector( 1 / (ncol(x_train) - 1)),
+                kernel = 'radial', cross = 10
+                )
