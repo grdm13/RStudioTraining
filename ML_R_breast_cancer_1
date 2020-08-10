@@ -1,0 +1,65 @@
+#paper is here:
+# https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/s12874-019-0681-4
+
+# First, set your working directory (see episode 'Analyzing Patient Data' for more
+# info)
+setwd("C:\\Users\\georg\\Documents\\ML_R_Breast_Cancer")
+
+#1. Importing and preparing the dataset.################################################################################################
+
+# Import the data and look at the first six rows
+cancer <- read.csv( file = "breast-cancer-wisconsin.data", header = FALSE, stringsAsFactors = F)
+
+# Give names to the collumns
+names(cancer) = c("ID", "thickness", "cell_size", "cell_shape", "adhesion", "epithelial_size", "bare_nuclei", "bland_cromatin", "normal_nucleoli", "mitoses", "class")
+
+#removing any rows with missing data 
+
+#convert data to dataframe
+cancer = as.data.frame(cancer)
+
+# for collumn bare_nuclei, if there is a value equal with ?, meaning that we dont know what happened 
+#we substitute this ? with NA = Non Available
+cancer$bare_nuclei = replace(cancer$bare_nuclei, cancer$bare_nuclei=="?", NA)
+
+# after the subtitution we ommit all the lines with NA inside them
+cancer = na.omit(cancer)
+
+#re-scoring the class variables from 2 and 4 to 0 and 1, 
+#where 0 indicates the tumour was benign and 1 indicates that it was malignant. 
+cancer$class = (cancer$class/2)-1
+
+set.seed(080817) #dont know yet
+index = 1:nrow(cancer) #builds the index
+
+#divide the dataset into two required segments, 
+#one 67% of the dataset, for training; 
+#other to be used for evaluation 33%.
+testindex = sample(index, trunc(length(index)/3))
+testset = cancer[testindex,]
+trainset = cancer[-testindex,]
+
+#inputs are denoted in code as x
+#outcomes are denoted using y
+
+x_train = data.matrix(trainset[,2:10])
+y_train = as.numeric(trainset[,11])
+
+x_test = data.matrix(testset[,2:10])
+y_test = as.numeric(testset[,11])
+
+#2. Training the ML algorithms.#######################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
